@@ -42,7 +42,7 @@ jobs:
 
       - name: Build executable
         run: |
-          cd src/
+          # cd src/
           mkdir -p ../dist
           go build -o ../dist/vault_raft_snapshot_agent
         env:
