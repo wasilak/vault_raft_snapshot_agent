@@ -1,4 +1,4 @@
-![Build](https://github.com/wasilak/vault_raft_snapshot_agent/workflows/Build/badge.svg?branch=master)
+[![CI](https://github.com/wasilak/vault_raft_snapshot_agent/actions/workflows/release.yml/badge.svg)](https://github.com/wasilak/vault_raft_snapshot_agent/actions/workflows/release.yml)
 
 # Raft Snapshot Agent
 
