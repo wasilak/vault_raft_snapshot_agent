@@ -43,8 +43,8 @@ jobs:
       - name: Build executable
         run: |
           # cd src/
-          mkdir -p ../dist
-          go build -o ../dist/vault_raft_snapshot_agent
+          mkdir -p ./dist
+          go build -o ./dist/vault_raft_snapshot_agent
         env:
           GOOS: ${{ matrix.os }}
           GOARCH: ${{ matrix.arch }}
