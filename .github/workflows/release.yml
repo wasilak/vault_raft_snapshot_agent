@@ -57,7 +57,6 @@ jobs:
           cd ./dist
           chmod +x vault_raft_snapshot_agent
           zip vault_raft_snapshot_agent-${{ matrix.os }}-${{ matrix.arch }}.zip vault_raft_snapshot_agent
-          ls -lha .
 
       - name: Release
         uses: softprops/action-gh-release@v1
