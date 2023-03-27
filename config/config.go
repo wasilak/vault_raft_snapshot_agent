@@ -1,12 +1,15 @@
 package config
 
 import (
-	"encoding/json"
-	"io/ioutil"
+	"flag"
+	"fmt"
 	"log"
-	"os"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+
+	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
 )
 
 // Configuration is the overall config object
@@ -24,6 +27,7 @@ type Configuration struct {
 	K8sAuthRole     string      `json:"k8s_auth_role,omitempty"`
 	K8sAuthPath     string      `json:"k8s_auth_path,omitempty"`
 	VaultAuthMethod string      `json:"vault_auth_method,omitempty"`
+	Daemon          bool        `json:"daemon"`
 }
 
 // AzureConfig is the configuration for Azure blob snapshots
@@ -59,18 +63,32 @@ type S3Config struct {
 
 // ReadConfig reads the configuration file
 func ReadConfig() (*Configuration, error) {
-	file := "/etc/vault.d/snapshot.json"
-	if len(os.Args) > 1 {
-		file = os.Args[1]
+	file := "./snapshot.json"
+	flag.String("config", file, "Configuration file path")
+
+	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
+	pflag.Parse()
+	viper.BindPFlags(pflag.CommandLine)
+
+	viper.SetEnvPrefix("VRSA")
+	viper.SetEnvKeyReplacer(strings.NewReplacer(`.`, `_`))
+	viper.AutomaticEnv()
+
+	viper.SetConfigFile(viper.GetString("config"))
+	viperErr := viper.ReadInConfig()
+
+	if viperErr != nil { // Handle errors reading the config file
+		log.Fatal(viperErr)
+		panic(viperErr)
 	}
-	cBytes, err := ioutil.ReadFile(file)
-	if err != nil {
-		log.Fatalf("Cannot read configuration file: %v", err.Error())
-	}
+
 	c := &Configuration{}
-	err = json.Unmarshal(cBytes, &c)
+
+	err := viper.Unmarshal(c)
 	if err != nil {
-		log.Fatalf("Cannot parse configuration file: %v", err.Error())
+		fmt.Printf("unable to decode into config struct, %v", err)
+		return nil, fmt.Errorf("unable to decode into config struct, %v", err)
 	}
+
 	return c, nil
 }

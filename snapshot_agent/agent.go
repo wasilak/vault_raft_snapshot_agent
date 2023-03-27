@@ -12,13 +12,13 @@ import (
 
 	"cloud.google.com/go/storage"
 	"github.com/Azure/azure-storage-blob-go/azblob"
-	"github.com/Lucretius/vault_raft_snapshot_agent/config"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	vaultApi "github.com/hashicorp/vault/api"
+	"github.com/wasilak/vault_raft_snapshot_agent/config"
 )
 
 type Snapshotter struct {
@@ -143,7 +143,7 @@ func (s *Snapshotter) ConfigureS3(config *config.Configuration) error {
 		awsConfig.Endpoint = aws.String(config.AWS.Endpoint)
 	}
 
-	if config.AWS.S3ForcePathStyle != false {
+	if !config.AWS.S3ForcePathStyle {
 		awsConfig.S3ForcePathStyle = aws.Bool(config.AWS.S3ForcePathStyle)
 	}
 
@@ -173,7 +173,7 @@ func (s *Snapshotter) ConfigureAzure(config *config.Configuration) error {
 		accountKey = os.Getenv("AZURE_STORAGE_ACCESS_KEY")
 	}
 	if len(accountName) == 0 || len(accountKey) == 0 {
-		return errors.New("Invalid Azure configuration")
+		return errors.New("invalid Azure configuration")
 	}
 	credential, err := azblob.NewSharedKeyCredential(accountName, accountKey)
 	if err != nil {

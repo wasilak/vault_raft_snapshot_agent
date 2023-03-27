@@ -1,4 +1,4 @@
-![Build](https://github.com/Lucretius/vault_raft_snapshot_agent/workflows/Build/badge.svg?branch=master)
+![Build](https://github.com/wasilak/vault_raft_snapshot_agent/workflows/Build/badge.svg?branch=master)
 
 # Raft Snapshot Agent
 
@@ -21,7 +21,7 @@ The recommended way of running this daemon is using systemctl, since it handles 
 ```
 [Unit]
 Description="An Open Source Snapshot Service for Raft"
-Documentation=https://github.com/Lucretius/vault_raft_snapshot_agent/
+Documentation=https://github.com/wasilak/vault_raft_snapshot_agent/
 Requires=network-online.target
 After=network-online.target
 ConditionFileNotEmpty=/etc/vault.d/snapshot.json
