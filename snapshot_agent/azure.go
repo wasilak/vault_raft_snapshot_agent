@@ -8,7 +8,7 @@ import (
 	"sort"
 
 	"github.com/Azure/azure-storage-blob-go/azblob"
-	"github.com/Lucretius/vault_raft_snapshot_agent/config"
+	"github.com/wasilak/vault_raft_snapshot_agent/config"
 )
 
 // CreateAzureSnapshot writes snapshot to azure blob storage

@@ -8,7 +8,7 @@ import (
 	"sort"
 
 	"cloud.google.com/go/storage"
-	"github.com/Lucretius/vault_raft_snapshot_agent/config"
+	"github.com/wasilak/vault_raft_snapshot_agent/config"
 	"google.golang.org/api/iterator"
 )
 

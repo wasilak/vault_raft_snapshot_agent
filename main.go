@@ -1,15 +1,14 @@
 package main
 
 import (
-	"bytes"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"github.com/Lucretius/vault_raft_snapshot_agent/config"
-	"github.com/Lucretius/vault_raft_snapshot_agent/snapshot_agent"
+	"github.com/wasilak/vault_raft_snapshot_agent/config"
+	"github.com/wasilak/vault_raft_snapshot_agent/snapshot_agent"
 )
 
 func listenForInterruptSignals() chan bool {
@@ -18,16 +17,15 @@ func listenForInterruptSignals() chan bool {
 	done := make(chan bool, 1)
 
 	go func() {
-		_ = <-sigs
+		<-sigs
 		done <- true
 	}()
 	return done
 }
 
 func main() {
-	done := listenForInterruptSignals()
-
 	log.Println("Reading configuration...")
+
 	c, err := config.ReadConfig()
 
 	if err != nil {
@@ -38,66 +36,26 @@ func main() {
 	if err != nil {
 		log.Fatalln("Cannot instantiate snapshotter.", err)
 	}
-	frequency, err := time.ParseDuration(c.Frequency)
 
-	if err != nil {
-		frequency = time.Hour
-	}
+	if c.Daemon {
+		done := listenForInterruptSignals()
 
-	for {
-		if snapshotter.TokenExpiration.Before(time.Now()) {
-			switch c.VaultAuthMethod {
-			case "k8s":
-				snapshotter.SetClientTokenFromK8sAuth(c)
-			default:
-				snapshotter.SetClientTokenFromAppRole(c)
-			}
-		}
-		leader, err := snapshotter.API.Sys().Leader()
+		frequency, err := time.ParseDuration(c.Frequency)
+
 		if err != nil {
-			log.Println(err.Error())
-			log.Fatalln("Unable to determine leader instance.  The snapshot agent will only run on the leader node.  Are you running this daemon on a Vault instance?")
+			frequency = time.Hour
 		}
-		leaderIsSelf := leader.IsSelf
-		if !leaderIsSelf {
-			log.Println("Not running on leader node, skipping.")
-		} else {
-			var snapshot bytes.Buffer
-			err := snapshotter.API.Sys().RaftSnapshot(&snapshot)
-			if err != nil {
-				log.Fatalln("Unable to generate snapshot", err.Error())
-			}
-			now := time.Now().UnixNano()
-			if c.Local.Path != "" {
-				snapshotPath, err := snapshotter.CreateLocalSnapshot(&snapshot, c, now)
-				logSnapshotError("local", snapshotPath, err)
-			}
-			if c.AWS.Bucket != "" {
-				snapshotPath, err := snapshotter.CreateS3Snapshot(&snapshot, c, now)
-				logSnapshotError("aws", snapshotPath, err)
-			}
-			if c.GCP.Bucket != "" {
-				snapshotPath, err := snapshotter.CreateGCPSnapshot(&snapshot, c, now)
-				logSnapshotError("gcp", snapshotPath, err)
-			}
-			if c.Azure.ContainerName != "" {
-				snapshotPath, err := snapshotter.CreateAzureSnapshot(&snapshot, c, now)
-				logSnapshotError("azure", snapshotPath, err)
-			}
-		}
-		select {
-		case <-time.After(frequency):
-			continue
-		case <-done:
-			os.Exit(1)
-		}
-	}
-}
 
-func logSnapshotError(dest, snapshotPath string, err error) {
-	if err != nil {
-		log.Printf("Failed to generate %s snapshot to %s: %v\n", dest, snapshotPath, err)
+		for {
+			snapshot_agent.RunBackup(snapshotter, c)
+			select {
+			case <-time.After(frequency):
+				continue
+			case <-done:
+				os.Exit(1)
+			}
+		}
 	} else {
-		log.Printf("Successfully created %s snapshot to %s\n", dest, snapshotPath)
+		snapshot_agent.RunBackup(snapshotter, c)
 	}
 }
