@@ -63,7 +63,7 @@ type S3Config struct {
 // ReadConfig reads the configuration file
 func ReadConfig() (*Configuration, error) {
 	file := "./snapshot.json"
-	flag.String("configfile", file, "Configuration file path")
+	flag.String("config", file, "Configuration file path")
 
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 	pflag.Parse()
