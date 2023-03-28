@@ -1,14 +1,12 @@
 package config
 
 import (
-	"flag"
 	"fmt"
 	"log"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 
-	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
 
@@ -63,20 +61,29 @@ type S3Config struct {
 
 // ReadConfig reads the configuration file
 func ReadConfig() (*Configuration, error) {
-	file := "./snapshot.json"
-	flag.String("configfile", file, "Configuration file path")
+	// file := "./snapshot.json"
+	// flag.String("configfile", file, "Configuration file path")
 
-	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
-	pflag.Parse()
-	viper.BindPFlags(pflag.CommandLine)
+	// pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
+	// pflag.Parse()
+	// viper.BindPFlags(pflag.CommandLine)
 
 	viper.SetDefault("debug", false)
+	viper.SetDefault("config", "./snapshot.json")
 
 	viper.SetEnvPrefix("VRSA")
 	viper.SetEnvKeyReplacer(strings.NewReplacer(`.`, `_`))
 	viper.AutomaticEnv()
 
-	viper.SetConfigFile(viper.GetString("configfile"))
+	// for _, key := range viper.AllKeys() {
+	// 	envKey := strings.ToUpper(strings.ReplaceAll(key, ".", "_"))
+	// 	err := viper.BindEnv(key, envKey)
+	// 	if err != nil {
+	// 		log.Println("config: unable to bind env: " + err.Error())
+	// 	}
+	// }
+
+	viper.SetConfigFile(viper.GetString("config"))
 	viperErr := viper.ReadInConfig()
 
 	if viperErr != nil { // Handle errors reading the config file
