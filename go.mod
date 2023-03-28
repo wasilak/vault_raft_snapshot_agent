@@ -7,7 +7,6 @@ require (
 	github.com/Azure/azure-storage-blob-go v0.15.0
 	github.com/aws/aws-sdk-go v1.44.230
 	github.com/hashicorp/vault/api v1.9.0
-	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.15.0
 	google.golang.org/api v0.114.0
 )
@@ -45,6 +44,7 @@ require (
 	github.com/spf13/afero v1.9.5 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
+	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/subosito/gotenv v1.4.2 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	golang.org/x/crypto v0.7.0 // indirect
