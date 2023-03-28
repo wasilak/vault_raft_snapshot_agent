@@ -3,7 +3,6 @@ package config
 import (
 	"flag"
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
@@ -72,15 +71,22 @@ func ReadConfig() (*Configuration, error) {
 
 	viper.SetEnvPrefix("VRSA")
 	viper.SetEnvKeyReplacer(strings.NewReplacer(`.`, `_`))
-	viper.AutomaticEnv()
 
-	viper.SetConfigFile(viper.GetString("config"))
-	viperErr := viper.ReadInConfig()
+	// for _, key := range viper.AllKeys() {
+	// 	if key != "config" {
+	// 		viper.BindEnv(key, strings.ReplaceAll(key, ".", "_"))
+	// 	}
+	// }
 
-	if viperErr != nil { // Handle errors reading the config file
-		log.Fatal(viperErr)
-		panic(viperErr)
+	if viper.GetString("config") != "" {
+		viper.SetConfigFile(viper.GetString("config"))
+		err := viper.ReadInConfig() // Find and read the config file
+		if err != nil {             // Handle errors reading the config file
+			panic(fmt.Errorf("fatal error config file: %s \n", err))
+		}
 	}
+
+	viper.AutomaticEnv()
 
 	c := &Configuration{}
 
