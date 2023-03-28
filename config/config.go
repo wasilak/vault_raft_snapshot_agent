@@ -64,7 +64,7 @@ type S3Config struct {
 // ReadConfig reads the configuration file
 func ReadConfig() (*Configuration, error) {
 	file := "./snapshot.json"
-	flag.String("config", file, "Configuration file path")
+	flag.String("configfile", file, "Configuration file path")
 
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 	pflag.Parse()
@@ -76,7 +76,7 @@ func ReadConfig() (*Configuration, error) {
 	viper.SetEnvKeyReplacer(strings.NewReplacer(`.`, `_`))
 	viper.AutomaticEnv()
 
-	viper.SetConfigFile(viper.GetString("config"))
+	viper.SetConfigFile(viper.GetString("configfile"))
 	viperErr := viper.ReadInConfig()
 
 	if viperErr != nil { // Handle errors reading the config file
