@@ -9,15 +9,15 @@ import (
 	"github.com/wasilak/vault_raft_snapshot_agent/config"
 )
 
-func logSnapshotError(dest, snapshotPath string, err error) error {
+func logSnapshotError(dest, snapshotPath string, err error) (string, error) {
 	if err != nil {
-		return fmt.Errorf("failed to generate %s snapshot to %s: %v", dest, snapshotPath, err)
+		return "", fmt.Errorf("failed to generate %s snapshot to %s: %v", dest, snapshotPath, err)
 	} else {
-		return fmt.Errorf("successfully created %s snapshot to %s", dest, snapshotPath)
+		return fmt.Sprintf("successfully created %s snapshot to %s", dest, snapshotPath), nil
 	}
 }
 
-func RunBackup(snapshotter *Snapshotter, c *config.Configuration) error {
+func RunBackup(snapshotter *Snapshotter, c *config.Configuration) (string, error) {
 	if snapshotter.TokenExpiration.Before(time.Now()) {
 		switch c.VaultAuthMethod {
 		case "k8s":
@@ -26,10 +26,12 @@ func RunBackup(snapshotter *Snapshotter, c *config.Configuration) error {
 			snapshotter.SetClientTokenFromAppRole(c)
 		}
 	}
+
 	leader, err := snapshotter.API.Sys().Leader()
 	if err != nil {
-		return fmt.Errorf("unable to determine leader instance. The snapshot agent will only run on the leader node.  Are you running this daemon on a Vault instance? %s", err)
+		return "", fmt.Errorf("unable to determine leader instance. The snapshot agent will only run on the leader node.  Are you running this daemon on a Vault instance? %s", err)
 	}
+
 	leaderIsSelf := leader.IsSelf
 	if !leaderIsSelf {
 		log.Println("Not running on leader node, skipping.")
@@ -37,7 +39,7 @@ func RunBackup(snapshotter *Snapshotter, c *config.Configuration) error {
 		var snapshot bytes.Buffer
 		err := snapshotter.API.Sys().RaftSnapshot(&snapshot)
 		if err != nil {
-			log.Fatalln("Unable to generate snapshot", err.Error())
+			return "", fmt.Errorf("unable to generate snapshot, %s", err.Error())
 		}
 		now := time.Now().UnixNano()
 		if c.Local.Path != "" {
@@ -58,5 +60,5 @@ func RunBackup(snapshotter *Snapshotter, c *config.Configuration) error {
 		}
 	}
 
-	return nil
+	return "", nil
 }

@@ -47,9 +47,11 @@ func main() {
 		}
 
 		for {
-			err = snapshot_agent.RunBackup(snapshotter, c)
+			result, err := snapshot_agent.RunBackup(snapshotter, c)
 			if err != nil {
 				log.Println(err)
+			} else {
+				log.Println(result)
 			}
 
 			select {
@@ -60,9 +62,11 @@ func main() {
 			}
 		}
 	} else {
-		err = snapshot_agent.RunBackup(snapshotter, c)
+		result, err := snapshot_agent.RunBackup(snapshotter, c)
 		if err != nil {
 			log.Fatalln(err)
+		} else {
+			log.Println(result)
 		}
 	}
 }
