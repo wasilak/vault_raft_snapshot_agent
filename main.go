@@ -47,7 +47,11 @@ func main() {
 		}
 
 		for {
-			snapshot_agent.RunBackup(snapshotter, c)
+			err = snapshot_agent.RunBackup(snapshotter, c)
+			if err != nil {
+				log.Println(err)
+			}
+
 			select {
 			case <-time.After(frequency):
 				continue
@@ -56,6 +60,9 @@ func main() {
 			}
 		}
 	} else {
-		snapshot_agent.RunBackup(snapshotter, c)
+		err = snapshot_agent.RunBackup(snapshotter, c)
+		if err != nil {
+			log.Fatalln(err)
+		}
 	}
 }

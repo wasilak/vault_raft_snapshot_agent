@@ -2,21 +2,22 @@ package snapshot_agent
 
 import (
 	"bytes"
+	"fmt"
 	"log"
 	"time"
 
 	"github.com/wasilak/vault_raft_snapshot_agent/config"
 )
 
-func logSnapshotError(dest, snapshotPath string, err error) {
+func logSnapshotError(dest, snapshotPath string, err error) error {
 	if err != nil {
-		log.Printf("Failed to generate %s snapshot to %s: %v\n", dest, snapshotPath, err)
+		return fmt.Errorf("failed to generate %s snapshot to %s: %v", dest, snapshotPath, err)
 	} else {
-		log.Printf("Successfully created %s snapshot to %s\n", dest, snapshotPath)
+		return fmt.Errorf("successfully created %s snapshot to %s", dest, snapshotPath)
 	}
 }
 
-func RunBackup(snapshotter *Snapshotter, c *config.Configuration) {
+func RunBackup(snapshotter *Snapshotter, c *config.Configuration) error {
 	if snapshotter.TokenExpiration.Before(time.Now()) {
 		switch c.VaultAuthMethod {
 		case "k8s":
@@ -27,8 +28,7 @@ func RunBackup(snapshotter *Snapshotter, c *config.Configuration) {
 	}
 	leader, err := snapshotter.API.Sys().Leader()
 	if err != nil {
-		log.Println(err.Error())
-		log.Fatalln("Unable to determine leader instance.  The snapshot agent will only run on the leader node.  Are you running this daemon on a Vault instance?")
+		return fmt.Errorf("unable to determine leader instance. The snapshot agent will only run on the leader node.  Are you running this daemon on a Vault instance? %s", err)
 	}
 	leaderIsSelf := leader.IsSelf
 	if !leaderIsSelf {
@@ -42,19 +42,21 @@ func RunBackup(snapshotter *Snapshotter, c *config.Configuration) {
 		now := time.Now().UnixNano()
 		if c.Local.Path != "" {
 			snapshotPath, err := snapshotter.CreateLocalSnapshot(&snapshot, c, now)
-			logSnapshotError("local", snapshotPath, err)
+			return logSnapshotError("local", snapshotPath, err)
 		}
 		if c.AWS.Bucket != "" {
 			snapshotPath, err := snapshotter.CreateS3Snapshot(&snapshot, c, now)
-			logSnapshotError("aws", snapshotPath, err)
+			return logSnapshotError("aws", snapshotPath, err)
 		}
 		if c.GCP.Bucket != "" {
 			snapshotPath, err := snapshotter.CreateGCPSnapshot(&snapshot, c, now)
-			logSnapshotError("gcp", snapshotPath, err)
+			return logSnapshotError("gcp", snapshotPath, err)
 		}
 		if c.Azure.ContainerName != "" {
 			snapshotPath, err := snapshotter.CreateAzureSnapshot(&snapshot, c, now)
-			logSnapshotError("azure", snapshotPath, err)
+			return logSnapshotError("azure", snapshotPath, err)
 		}
 	}
+
+	return nil
 }
