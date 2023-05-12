@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"net/url"
 	"os"
 	"path"
@@ -18,7 +17,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	vaultApi "github.com/hashicorp/vault/api"
-	"github.com/wasilak/vault_raft_snapshot_agent/config"
+	appconfig "github.com/wasilak/vault_raft_snapshot_agent/config"
 )
 
 type Snapshotter struct {
@@ -30,7 +29,7 @@ type Snapshotter struct {
 	TokenExpiration time.Time
 }
 
-func NewSnapshotter(config *config.Configuration) (*Snapshotter, error) {
+func NewSnapshotter(config *appconfig.Configuration) (*Snapshotter, error) {
 	snapshotter := &Snapshotter{}
 	err := snapshotter.ConfigureVaultClient(config)
 	if err != nil {
@@ -57,7 +56,7 @@ func NewSnapshotter(config *config.Configuration) (*Snapshotter, error) {
 	return snapshotter, nil
 }
 
-func (s *Snapshotter) ConfigureVaultClient(config *config.Configuration) error {
+func (s *Snapshotter) ConfigureVaultClient(config *appconfig.Configuration) error {
 	vaultConfig := vaultApi.DefaultConfig()
 	if config.Address != "" {
 		vaultConfig.Address = config.Address
@@ -77,7 +76,7 @@ func (s *Snapshotter) ConfigureVaultClient(config *config.Configuration) error {
 	return s.SetClientTokenFromAppRole(config)
 }
 
-func (s *Snapshotter) SetClientTokenFromAppRole(config *config.Configuration) error {
+func (s *Snapshotter) SetClientTokenFromAppRole(config *appconfig.Configuration) error {
 	data := map[string]interface{}{
 		"role_id":   config.RoleID,
 		"secret_id": config.SecretID,
@@ -95,7 +94,7 @@ func (s *Snapshotter) SetClientTokenFromAppRole(config *config.Configuration) er
 	return nil
 }
 
-func (s *Snapshotter) SetClientTokenFromK8sAuth(config *config.Configuration) error {
+func (s *Snapshotter) SetClientTokenFromK8sAuth(config *appconfig.Configuration) error {
 
 	if config.K8sAuthPath == "" || config.K8sAuthRole == "" {
 		return errors.New("missing k8s auth definitions")
@@ -132,7 +131,7 @@ func (s *Snapshotter) SetClientTokenFromK8sAuth(config *config.Configuration) er
 	return nil
 }
 
-func (s *Snapshotter) ConfigureS3(config *config.Configuration) error {
+func (s *Snapshotter) ConfigureS3(config *appconfig.Configuration) error {
 	awsConfig := &aws.Config{Region: aws.String(config.AWS.Region)}
 
 	if config.AWS.AccessKeyID != "" && config.AWS.SecretAccessKey != "" {
@@ -153,7 +152,7 @@ func (s *Snapshotter) ConfigureS3(config *config.Configuration) error {
 	return nil
 }
 
-func (s *Snapshotter) ConfigureGCP(config *config.Configuration) error {
+func (s *Snapshotter) ConfigureGCP(config *appconfig.Configuration) error {
 	ctx := context.Background()
 	client, err := storage.NewClient(ctx)
 	if err != nil {
@@ -163,7 +162,7 @@ func (s *Snapshotter) ConfigureGCP(config *config.Configuration) error {
 	return nil
 }
 
-func (s *Snapshotter) ConfigureAzure(config *config.Configuration) error {
+func (s *Snapshotter) ConfigureAzure(config *appconfig.Configuration) error {
 	accountName := config.Azure.AccountName
 	if os.Getenv("AZURE_STORAGE_ACCOUNT") != "" {
 		accountName = os.Getenv("AZURE_STORAGE_ACCOUNT")
@@ -177,7 +176,8 @@ func (s *Snapshotter) ConfigureAzure(config *config.Configuration) error {
 	}
 	credential, err := azblob.NewSharedKeyCredential(accountName, accountKey)
 	if err != nil {
-		log.Fatal("Invalid credentials with error: " + err.Error())
+		appconfig.Logger.Error("Invalid credentials with error: " + err.Error())
+		panic(err)
 	}
 	p := azblob.NewPipeline(credential, azblob.PipelineOptions{})
 	URL, _ := url.Parse(

@@ -3,10 +3,9 @@ package snapshot_agent
 import (
 	"bytes"
 	"fmt"
-	"log"
 	"time"
 
-	"github.com/wasilak/vault_raft_snapshot_agent/config"
+	appconfig "github.com/wasilak/vault_raft_snapshot_agent/config"
 )
 
 func logSnapshotError(dest, snapshotPath string, err error) (string, error) {
@@ -17,7 +16,7 @@ func logSnapshotError(dest, snapshotPath string, err error) (string, error) {
 	}
 }
 
-func RunBackup(snapshotter *Snapshotter, c *config.Configuration) (string, error) {
+func RunBackup(snapshotter *Snapshotter, c *appconfig.Configuration) (string, error) {
 	if snapshotter.TokenExpiration.Before(time.Now()) {
 		switch c.VaultAuthMethod {
 		case "k8s":
@@ -34,7 +33,7 @@ func RunBackup(snapshotter *Snapshotter, c *config.Configuration) (string, error
 
 	leaderIsSelf := leader.IsSelf
 	if !leaderIsSelf {
-		log.Println("Not running on leader node, skipping.")
+		appconfig.Logger.Info("Not running on leader node, skipping.")
 	} else {
 		var snapshot bytes.Buffer
 		err := snapshotter.API.Sys().RaftSnapshot(&snapshot)

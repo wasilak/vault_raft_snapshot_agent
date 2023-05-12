@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -24,17 +23,21 @@ func listenForInterruptSignals() chan bool {
 }
 
 func main() {
-	log.Println("Reading configuration...")
+	config.InitLogging()
+
+	config.Logger.Info("Reading configuration...")
 
 	c, err := config.ReadConfig()
 
 	if err != nil {
-		log.Fatalln("Configuration could not be found")
+		config.Logger.Error("Configuration could not be found")
+		os.Exit(1)
 	}
 
 	snapshotter, err := snapshot_agent.NewSnapshotter(c)
 	if err != nil {
-		log.Fatalln("Cannot instantiate snapshotter.", err)
+		config.Logger.Error("Cannot instantiate snapshotter.", err)
+		os.Exit(1)
 	}
 
 	if c.Daemon {
@@ -49,9 +52,9 @@ func main() {
 		for {
 			result, err := snapshot_agent.RunBackup(snapshotter, c)
 			if err != nil {
-				log.Println(err)
+				config.Logger.Info(err.Error())
 			} else {
-				log.Println(result)
+				config.Logger.Info(result)
 			}
 
 			select {
@@ -64,9 +67,10 @@ func main() {
 	} else {
 		result, err := snapshot_agent.RunBackup(snapshotter, c)
 		if err != nil {
-			log.Fatalln(err)
+			config.Logger.Error(err.Error())
+			os.Exit(1)
 		} else {
-			log.Println(result)
+			config.Logger.Info(result)
 		}
 	}
 }

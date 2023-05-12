@@ -4,15 +4,14 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 	"sort"
 
 	"github.com/Azure/azure-storage-blob-go/azblob"
-	"github.com/wasilak/vault_raft_snapshot_agent/config"
+	appconfig "github.com/wasilak/vault_raft_snapshot_agent/config"
 )
 
 // CreateAzureSnapshot writes snapshot to azure blob storage
-func (s *Snapshotter) CreateAzureSnapshot(reader io.ReadWriter, config *config.Configuration, currentTs int64) (string, error) {
+func (s *Snapshotter) CreateAzureSnapshot(reader io.ReadWriter, config *appconfig.Configuration, currentTs int64) (string, error) {
 	ctx := context.Background()
 	url := fmt.Sprintf("raft_snapshot-%d.snap", currentTs)
 	blob := s.AzureUploader.NewBlockBlobURL(url)
@@ -30,7 +29,7 @@ func (s *Snapshotter) CreateAzureSnapshot(reader io.ReadWriter, config *config.C
 				MaxResults: 500,
 			})
 			if err != nil {
-				log.Println("Unable to iterate through bucket to find old snapshots to delete")
+				appconfig.Logger.Info("Unable to iterate through bucket to find old snapshots to delete")
 				return url, err
 			}
 			blobs := res.Segment.BlobItems
@@ -47,7 +46,7 @@ func (s *Snapshotter) CreateAzureSnapshot(reader io.ReadWriter, config *config.C
 				val := s.AzureUploader.NewBlockBlobURL(b.Name)
 				val.Delete(deleteCtx, azblob.DeleteSnapshotsOptionInclude, azblob.BlobAccessConditions{})
 				if err != nil {
-					log.Println("Cannot delete old snapshot")
+					appconfig.Logger.Info("Cannot delete old snapshot")
 					return url, err
 				}
 			}

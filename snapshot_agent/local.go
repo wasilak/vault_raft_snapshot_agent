@@ -4,16 +4,15 @@ import (
 	"bytes"
 	"fmt"
 	"io/fs"
-	"log"
 	"os"
 	"sort"
 	"strings"
 
-	"github.com/wasilak/vault_raft_snapshot_agent/config"
+	appconfig "github.com/wasilak/vault_raft_snapshot_agent/config"
 )
 
 // CreateLocalSnapshot writes snapshot to disk location
-func (s *Snapshotter) CreateLocalSnapshot(buf *bytes.Buffer, config *config.Configuration, currentTs int64) (string, error) {
+func (s *Snapshotter) CreateLocalSnapshot(buf *bytes.Buffer, config *appconfig.Configuration, currentTs int64) (string, error) {
 	fileName := fmt.Sprintf("%s/raft_snapshot-%d.snap", config.Local.Path, currentTs)
 	err := os.WriteFile(fileName, buf.Bytes(), 0644)
 	if err != nil {
@@ -28,7 +27,7 @@ func (s *Snapshotter) CreateLocalSnapshot(buf *bytes.Buffer, config *config.Conf
 				}
 			}
 			if err != nil {
-				log.Println("Unable to read file directory to delete old snapshots")
+				appconfig.Logger.Info("Unable to read file directory to delete old snapshots")
 				return fileName, err
 			}
 			timestamp := func(f1, f2 *fs.DirEntry) bool {

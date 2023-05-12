@@ -4,16 +4,15 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"log"
 	"sort"
 
 	"cloud.google.com/go/storage"
-	"github.com/wasilak/vault_raft_snapshot_agent/config"
+	appconfig "github.com/wasilak/vault_raft_snapshot_agent/config"
 	"google.golang.org/api/iterator"
 )
 
 // CreateGCPSnapshot writes snapshot to google storage
-func (s *Snapshotter) CreateGCPSnapshot(b *bytes.Buffer, config *config.Configuration, currentTs int64) (string, error) {
+func (s *Snapshotter) CreateGCPSnapshot(b *bytes.Buffer, config *appconfig.Configuration, currentTs int64) (string, error) {
 	fileName := fmt.Sprintf("raft_snapshot-%d.snap", currentTs)
 	obj := s.GCPBucket.Object(fileName)
 	w := obj.NewWriter(context.Background())
@@ -37,7 +36,7 @@ func (s *Snapshotter) CreateGCPSnapshot(b *bytes.Buffer, config *config.Configur
 				break
 			}
 			if err != nil {
-				log.Println("Unable to iterate through bucket to find old snapshots to delete")
+				appconfig.Logger.Info("Unable to iterate through bucket to find old snapshots to delete")
 				return fileName, err
 			}
 			files = append(files, *attrs)
@@ -57,7 +56,7 @@ func (s *Snapshotter) CreateGCPSnapshot(b *bytes.Buffer, config *config.Configur
 			obj := s.GCPBucket.Object(ss.Name)
 			err := obj.Delete(deleteCtx)
 			if err != nil {
-				log.Println("Cannot delete old snapshot")
+				appconfig.Logger.Info("Cannot delete old snapshot")
 				return fileName, err
 			}
 		}

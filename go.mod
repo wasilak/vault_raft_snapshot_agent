@@ -8,6 +8,7 @@ require (
 	github.com/aws/aws-sdk-go v1.44.230
 	github.com/hashicorp/vault/api v1.9.0
 	github.com/spf13/viper v1.15.0
+	golang.org/x/exp v0.0.0-20230510235704-dd950f8aeaea
 	google.golang.org/api v0.114.0
 )
 
