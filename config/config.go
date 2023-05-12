@@ -2,8 +2,6 @@ package config
 
 import (
 	"fmt"
-	"io"
-	"log"
 	"os"
 	"strings"
 
@@ -95,12 +93,6 @@ func InitLogging() {
 		AddSource: true,
 	}
 
-	file, err := os.OpenFile(viper.GetString("LogFile"), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
-	if err != nil {
-		log.Println(err)
-	}
-	mw := io.MultiWriter(os.Stdout, file)
-
-	textHandler := slog.NewTextHandler(mw, &opts)
+	textHandler := slog.NewTextHandler(os.Stdout, &opts)
 	Logger = slog.New(textHandler)
 }

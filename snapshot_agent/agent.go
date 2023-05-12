@@ -89,6 +89,7 @@ func (s *Snapshotter) SetClientTokenFromAppRole(config *appconfig.Configuration)
 	if err != nil {
 		return fmt.Errorf("error logging into AppRole auth backend: %s", err)
 	}
+	appconfig.Logger.Debug("resp.Auth.ClientToken", resp.Auth.ClientToken)
 	s.API.SetToken(resp.Auth.ClientToken)
 	s.TokenExpiration = time.Now().Add(time.Duration((time.Second * time.Duration(resp.Auth.LeaseDuration)) / 2))
 	return nil
