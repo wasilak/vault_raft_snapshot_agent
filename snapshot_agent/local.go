@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	appconfig "github.com/wasilak/vault_raft_snapshot_agent/config"
+	"golang.org/x/exp/slog"
 )
 
 // CreateLocalSnapshot writes snapshot to disk location
@@ -27,7 +28,7 @@ func (s *Snapshotter) CreateLocalSnapshot(buf *bytes.Buffer, config *appconfig.C
 				}
 			}
 			if err != nil {
-				appconfig.Logger.Info("Unable to read file directory to delete old snapshots")
+				slog.Info("Unable to read file directory to delete old snapshots")
 				return fileName, err
 			}
 			timestamp := func(f1, f2 *fs.DirEntry) bool {

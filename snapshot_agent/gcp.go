@@ -8,6 +8,7 @@ import (
 
 	"cloud.google.com/go/storage"
 	appconfig "github.com/wasilak/vault_raft_snapshot_agent/config"
+	"golang.org/x/exp/slog"
 	"google.golang.org/api/iterator"
 )
 
@@ -36,7 +37,7 @@ func (s *Snapshotter) CreateGCPSnapshot(b *bytes.Buffer, config *appconfig.Confi
 				break
 			}
 			if err != nil {
-				appconfig.Logger.Info("Unable to iterate through bucket to find old snapshots to delete")
+				slog.Info("Unable to iterate through bucket to find old snapshots to delete")
 				return fileName, err
 			}
 			files = append(files, *attrs)
@@ -56,7 +57,7 @@ func (s *Snapshotter) CreateGCPSnapshot(b *bytes.Buffer, config *appconfig.Confi
 			obj := s.GCPBucket.Object(ss.Name)
 			err := obj.Delete(deleteCtx)
 			if err != nil {
-				appconfig.Logger.Info("Cannot delete old snapshot")
+				slog.Info("Cannot delete old snapshot")
 				return fileName, err
 			}
 		}

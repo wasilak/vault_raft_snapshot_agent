@@ -2,16 +2,12 @@ package config
 
 import (
 	"fmt"
-	"os"
 	"strings"
-
-	"golang.org/x/exp/slog"
 
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/spf13/viper"
+	"golang.org/x/exp/slog"
 )
-
-var Logger *slog.Logger
 
 // Configuration is the overall config object
 type Configuration struct {
@@ -74,7 +70,7 @@ func ReadConfig() (*Configuration, error) {
 	viper.SetConfigFile(viper.GetString("config"))
 	viperErr := viper.ReadInConfig()
 	if viperErr != nil { // Handle errors reading the config file
-		Logger.Error(viperErr.Error())
+		slog.Error(viperErr.Error())
 		panic(viperErr)
 	}
 
@@ -85,14 +81,4 @@ func ReadConfig() (*Configuration, error) {
 	}
 
 	return &c, nil
-}
-
-func InitLogging() {
-	opts := slog.HandlerOptions{
-		Level:     slog.LevelDebug,
-		AddSource: true,
-	}
-
-	textHandler := slog.NewTextHandler(os.Stdout, &opts)
-	Logger = slog.New(textHandler)
 }

@@ -8,6 +8,7 @@ import (
 
 	"github.com/Azure/azure-storage-blob-go/azblob"
 	appconfig "github.com/wasilak/vault_raft_snapshot_agent/config"
+	"golang.org/x/exp/slog"
 )
 
 // CreateAzureSnapshot writes snapshot to azure blob storage
@@ -29,7 +30,7 @@ func (s *Snapshotter) CreateAzureSnapshot(reader io.ReadWriter, config *appconfi
 				MaxResults: 500,
 			})
 			if err != nil {
-				appconfig.Logger.Info("Unable to iterate through bucket to find old snapshots to delete")
+				slog.Info("Unable to iterate through bucket to find old snapshots to delete")
 				return url, err
 			}
 			blobs := res.Segment.BlobItems
@@ -46,7 +47,7 @@ func (s *Snapshotter) CreateAzureSnapshot(reader io.ReadWriter, config *appconfi
 				val := s.AzureUploader.NewBlockBlobURL(b.Name)
 				val.Delete(deleteCtx, azblob.DeleteSnapshotsOptionInclude, azblob.BlobAccessConditions{})
 				if err != nil {
-					appconfig.Logger.Info("Cannot delete old snapshot")
+					slog.Info("Cannot delete old snapshot")
 					return url, err
 				}
 			}

@@ -17,7 +17,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	vaultApi "github.com/hashicorp/vault/api"
-	appconfig "github.com/wasilak/vault_raft_snapshot_agent/config"
+	"github.com/wasilak/vault_raft_snapshot_agent/config"
+	"golang.org/x/exp/slog"
 )
 
 type Snapshotter struct {
@@ -29,7 +30,7 @@ type Snapshotter struct {
 	TokenExpiration time.Time
 }
 
-func NewSnapshotter(config *appconfig.Configuration) (*Snapshotter, error) {
+func NewSnapshotter(config *config.Configuration) (*Snapshotter, error) {
 	snapshotter := &Snapshotter{}
 	err := snapshotter.ConfigureVaultClient(config)
 	if err != nil {
@@ -56,7 +57,7 @@ func NewSnapshotter(config *appconfig.Configuration) (*Snapshotter, error) {
 	return snapshotter, nil
 }
 
-func (s *Snapshotter) ConfigureVaultClient(config *appconfig.Configuration) error {
+func (s *Snapshotter) ConfigureVaultClient(config *config.Configuration) error {
 	vaultConfig := vaultApi.DefaultConfig()
 	if config.Address != "" {
 		vaultConfig.Address = config.Address
@@ -76,7 +77,7 @@ func (s *Snapshotter) ConfigureVaultClient(config *appconfig.Configuration) erro
 	return s.SetClientTokenFromAppRole(config)
 }
 
-func (s *Snapshotter) SetClientTokenFromAppRole(config *appconfig.Configuration) error {
+func (s *Snapshotter) SetClientTokenFromAppRole(config *config.Configuration) error {
 	data := map[string]interface{}{
 		"role_id":   config.RoleID,
 		"secret_id": config.SecretID,
@@ -89,13 +90,12 @@ func (s *Snapshotter) SetClientTokenFromAppRole(config *appconfig.Configuration)
 	if err != nil {
 		return fmt.Errorf("error logging into AppRole auth backend: %s", err)
 	}
-	appconfig.Logger.Debug("resp.Auth.ClientToken", resp.Auth.ClientToken)
 	s.API.SetToken(resp.Auth.ClientToken)
 	s.TokenExpiration = time.Now().Add(time.Duration((time.Second * time.Duration(resp.Auth.LeaseDuration)) / 2))
 	return nil
 }
 
-func (s *Snapshotter) SetClientTokenFromK8sAuth(config *appconfig.Configuration) error {
+func (s *Snapshotter) SetClientTokenFromK8sAuth(config *config.Configuration) error {
 
 	if config.K8sAuthPath == "" || config.K8sAuthRole == "" {
 		return errors.New("missing k8s auth definitions")
@@ -132,7 +132,7 @@ func (s *Snapshotter) SetClientTokenFromK8sAuth(config *appconfig.Configuration)
 	return nil
 }
 
-func (s *Snapshotter) ConfigureS3(config *appconfig.Configuration) error {
+func (s *Snapshotter) ConfigureS3(config *config.Configuration) error {
 	awsConfig := &aws.Config{Region: aws.String(config.AWS.Region)}
 
 	if config.AWS.AccessKeyID != "" && config.AWS.SecretAccessKey != "" {
@@ -153,7 +153,7 @@ func (s *Snapshotter) ConfigureS3(config *appconfig.Configuration) error {
 	return nil
 }
 
-func (s *Snapshotter) ConfigureGCP(config *appconfig.Configuration) error {
+func (s *Snapshotter) ConfigureGCP(config *config.Configuration) error {
 	ctx := context.Background()
 	client, err := storage.NewClient(ctx)
 	if err != nil {
@@ -163,7 +163,7 @@ func (s *Snapshotter) ConfigureGCP(config *appconfig.Configuration) error {
 	return nil
 }
 
-func (s *Snapshotter) ConfigureAzure(config *appconfig.Configuration) error {
+func (s *Snapshotter) ConfigureAzure(config *config.Configuration) error {
 	accountName := config.Azure.AccountName
 	if os.Getenv("AZURE_STORAGE_ACCOUNT") != "" {
 		accountName = os.Getenv("AZURE_STORAGE_ACCOUNT")
@@ -177,7 +177,7 @@ func (s *Snapshotter) ConfigureAzure(config *appconfig.Configuration) error {
 	}
 	credential, err := azblob.NewSharedKeyCredential(accountName, accountKey)
 	if err != nil {
-		appconfig.Logger.Error("Invalid credentials with error: " + err.Error())
+		slog.Error("Invalid credentials with error: " + err.Error())
 		panic(err)
 	}
 	p := azblob.NewPipeline(credential, azblob.PipelineOptions{})

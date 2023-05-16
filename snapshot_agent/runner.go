@@ -6,6 +6,7 @@ import (
 	"time"
 
 	appconfig "github.com/wasilak/vault_raft_snapshot_agent/config"
+	"golang.org/x/exp/slog"
 )
 
 func logSnapshotError(dest, snapshotPath string, err error) (string, error) {
@@ -33,7 +34,7 @@ func RunBackup(snapshotter *Snapshotter, c *appconfig.Configuration) (string, er
 
 	leaderIsSelf := leader.IsSelf
 	if !leaderIsSelf {
-		appconfig.Logger.Info("Not running on leader node, skipping.")
+		slog.Info("Not running on leader node, skipping.")
 	} else {
 		var snapshot bytes.Buffer
 		err := snapshotter.API.Sys().RaftSnapshot(&snapshot)

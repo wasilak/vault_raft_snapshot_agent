@@ -8,6 +8,7 @@ import (
 
 	"github.com/wasilak/vault_raft_snapshot_agent/config"
 	"github.com/wasilak/vault_raft_snapshot_agent/snapshot_agent"
+	"golang.org/x/exp/slog"
 )
 
 func listenForInterruptSignals() chan bool {
@@ -23,20 +24,31 @@ func listenForInterruptSignals() chan bool {
 }
 
 func main() {
-	config.InitLogging()
 
-	config.Logger.Info("Reading configuration...")
+	slog.Info("Reading configuration...")
 
 	c, err := config.ReadConfig()
 
+	logLevel := "info"
+	if ll := os.Getenv("VRSA_LOGLEVEL"); ll != "" {
+		logLevel = ll
+	}
+
+	logFormat := "plain"
+	if lg := os.Getenv("VRSA_LOGFORMAT"); lg != "" {
+		logFormat = lg
+	}
+
+	config.InitLogging(logLevel, logFormat)
+
 	if err != nil {
-		config.Logger.Error("Configuration could not be found")
+		slog.Error("Configuration could not be found")
 		os.Exit(1)
 	}
 
 	snapshotter, err := snapshot_agent.NewSnapshotter(c)
 	if err != nil {
-		config.Logger.Error("Cannot instantiate snapshotter.", err)
+		slog.Error("Cannot instantiate snapshotter.", slog.AnyValue(err))
 		os.Exit(1)
 	}
 
@@ -52,9 +64,9 @@ func main() {
 		for {
 			result, err := snapshot_agent.RunBackup(snapshotter, c)
 			if err != nil {
-				config.Logger.Info(err.Error())
+				slog.Error(err.Error())
 			} else {
-				config.Logger.Info(result)
+				slog.Info(result)
 			}
 
 			select {
@@ -67,10 +79,10 @@ func main() {
 	} else {
 		result, err := snapshot_agent.RunBackup(snapshotter, c)
 		if err != nil {
-			config.Logger.Error(err.Error())
+			slog.Error(err.Error())
 			os.Exit(1)
 		} else {
-			config.Logger.Info(result)
+			slog.Info(result)
 		}
 	}
 }
